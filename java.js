@@ -17,7 +17,28 @@ const codeDatabase = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
+// Check if this is a raw content request
+function isRawRequest() {
+    return window.location.pathname.startsWith('/raw/');
+}
+
+// Handle raw content display
+function handleRawRequest() {
+    const rawId = window.location.pathname.split('/raw/')[1];
+    const rawCode = codeDatabase.load(rawId);
+    if (rawCode) {
+        document.body.innerHTML = `<pre>${rawCode}</pre>`;
+        document.body.style.margin = '0';
+        document.body.style.padding = '10px';
+        document.body.style.backgroundColor = '#1e1e1e';
+        document.body.style.color = '#ffffff';
+        return true;
+    }
+    return false;
+}
+
+// Main application
+function initApp() {
     const codeEditor = document.getElementById('codeEditor');
     const saveBtn = document.getElementById('saveBtn');
     const copyBtn = document.getElementById('copyBtn');
@@ -34,20 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedCode) {
             codeEditor.value = savedCode;
             updateDisplays(id);
-        }
-    }
-
-    // Handle /raw/ routes
-    if (window.location.pathname.startsWith('/raw/')) {
-        const rawId = window.location.pathname.split('/raw/')[1];
-        const rawCode = codeDatabase.load(rawId);
-        if (rawCode) {
-            document.body.innerHTML = `<pre>${rawCode}</pre>`;
-            document.body.style.margin = '0';
-            document.body.style.padding = '10px';
-            document.body.style.backgroundColor = '#1e1e1e';
-            document.body.style.color = '#ffffff';
-            return; // Stop execution of other code
         }
     }
 
@@ -89,4 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
         urlDisplay.innerHTML = `<strong>Share URL:</strong><br>${url}`;
         loadstringDisplay.innerHTML = `<strong>Loadstring:</strong><br>${loadstring}`;
     }
-});
+}
+
+// Start the application
+if (isRawRequest()) {
+    if (!handleRawRequest()) {
+        // If raw ID not found, redirect to main page
+        window.location.href = '/';
+    }
+} else {
+    document.addEventListener('DOMContentLoaded', initApp);
+}
