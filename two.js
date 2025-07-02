@@ -1,81 +1,47 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const codeEditor = document.getElementById('codeEditor');
-    const saveBtn = document.getElementById('saveBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const newBtn = document.getElementById('newBtn');
-    const urlDisplay = document.getElementById('urlDisplay');
-    const loadstringDisplay = document.getElementById('loadstringDisplay');
+const express = require('express');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const app = express();
 
-    // Check URL for ID parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    
-    if (id) {
-        fetch(`/raw/${id}`)
-            .then(response => response.text())
-            .then(code => {
-                codeEditor.value = code;
-                updateDisplays(id);
-            })
-            .catch(err => {
-                console.error('Error loading paste:', err);
-                alert('Paste not found');
-            });
-    }
+// In-memory storage (replace with database in production)
+const scripts = new Map();
 
-    // Save code
-    saveBtn.addEventListener('click', function() {
-        const code = codeEditor.value;
-        
-        fetch('/api/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code })
-        })
-        .then(response => response.json())
-        .then(data => {
-            window.history.pushState({}, '', `/?id=${data.id}`);
-            updateDisplays(data.id, data);
-        })
-        .catch(err => {
-            console.error('Error saving paste:', err);
-            alert('Failed to save paste');
-        });
-    });
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-    // Copy loadstring
-    copyBtn.addEventListener('click', function() {
-        const loadstring = loadstringDisplay.textContent.replace('Loadstring:', '').trim();
-        if (!loadstring) {
-            alert('Please generate a link first!');
-            return;
+// Upload endpoint
+app.post('/upload', (req, res) => {
+    try {
+        const { script } = req.body;
+        if (!script) {
+            return res.status(400).json({ success: false, error: 'No script provided' });
         }
-        
-        navigator.clipboard.writeText(loadstring)
-            .then(() => alert('Loadstring copied to clipboard!'))
-            .catch(err => console.error('Failed to copy:', err));
-    });
 
-    // New paste
-    newBtn.addEventListener('click', function() {
-        codeEditor.value = 'print("Hello it works!")';
-        window.history.pushState({}, '', '/');
-        urlDisplay.textContent = '';
-        loadstringDisplay.textContent = '';
-    });
+        const id = uuidv4();
+        scripts.set(id, script);
 
-    // Update displays
-    function updateDisplays(id, apiData) {
-        const baseUrl = window.location.origin;
-        const data = apiData || {
-            url: `${baseUrl}/?id=${id}`,
-            rawUrl: `${baseUrl}/raw/${id}`,
-            loadstring: `loadstring(game:HttpGet("${baseUrl}/raw/${id}"))()`
-        };
-        
-        urlDisplay.innerHTML = `<strong>Share URL:</strong><br><a href="${data.url}" target="_blank">${data.url}</a>`;
-        loadstringDisplay.innerHTML = `<strong>Loadstring:</strong><br>${data.loadstring}`;
+        res.json({ success: true, id });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// Raw script endpoint
+app.get('/raw/:id', (req, res) => {
+    const script = scripts.get(req.params.id);
+    if (!script) {
+        return res.status(404).send('Script not found');
+    }
+
+    res.type('text/plain').send(script);
+});
+
+// All other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
