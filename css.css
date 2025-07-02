@@ -4,15 +4,12 @@ body {
     color: #f0f0f0;
     margin: 0;
     padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
 }
 
 .container {
     width: 80%;
     max-width: 800px;
+    margin: 0 auto;
     background-color: #2d2d2d;
     padding: 20px;
     border-radius: 8px;
@@ -29,6 +26,7 @@ h1 {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
 }
 
 button {
@@ -61,11 +59,16 @@ button:hover {
     margin-bottom: 15px;
 }
 
-.url-display {
+.url-display, .loadstring-display {
     background-color: #1e1e1e;
     padding: 10px;
     border-radius: 4px;
     border: 1px solid #444;
     word-break: break-all;
     font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.loadstring-display {
+    background-color: #1e2d3d;
 }
