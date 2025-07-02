@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if there's a saved code in the URL hash
     if (window.location.hash) {
         try {
-            const decoded = atob(window.location.hash.substring(1));
+            const decoded = decodeURIComponent(atob(window.location.hash.substring(1)));
             codeEditor.value = decoded;
             updateUrlDisplay();
         } catch (e) {
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save code to URL hash
     saveBtn.addEventListener('click', function() {
         const code = codeEditor.value;
-        const encoded = btoa(code);
+        const encoded = btoa(encodeURIComponent(code));
         window.location.hash = encoded;
         updateUrlDisplay();
         alert('Code saved to URL!');
@@ -26,8 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Copy loadstring to clipboard
     copyBtn.addEventListener('click', function() {
-        const currentUrl = window.location.origin + window.location.pathname;
-        const loadstring = `loadstring(game:HttpGet("${currentUrl}#${btoa(codeEditor.value)}"))()`;
+        const encoded = btoa(encodeURIComponent(codeEditor.value));
+        const loadstring = `loadstring(game:HttpGet("${window.location.href.split('#')[0]}#${encoded}", true))()`;
         
         navigator.clipboard.writeText(loadstring)
             .then(() => alert('Loadstring copied to clipboard!'))
@@ -36,8 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update the URL display
     function updateUrlDisplay() {
-        const currentUrl = window.location.origin + window.location.pathname + window.location.hash;
-        urlDisplay.textContent = currentUrl;
+        urlDisplay.textContent = window.location.href;
     }
     
     // Initial display update
