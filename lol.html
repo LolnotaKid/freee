@@ -3,21 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Code Host</title>
-    <link rel="stylesheet" href="css.css">
+    <title>Roblox Script Host</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Roblox Code Host</h1>
-        <div class="controls">
-            <button id="saveBtn">Generate Link</button>
-            <button id="copyBtn">Copy Loadstring</button>
-            <button id="newBtn">New Paste</button>
+        <h1>Roblox Script Host</h1>
+        <textarea id="scriptInput" placeholder="Paste your Lua script here"></textarea>
+        <button onclick="uploadScript()">Upload</button>
+        <div id="result"></div>
+        <div id="loadstringInfo" style="display: none;">
+            <h3>How to use in Roblox:</h3>
+            <p>Copy this loadstring:</p>
+            <code id="loadstringCode"></code>
         </div>
-        <textarea id="codeEditor" placeholder="Enter your Lua code here...">print("Hello it works!")</textarea>
-        <div class="url-display" id="urlDisplay"></div>
-        <div class="loadstring-display" id="loadstringDisplay"></div>
     </div>
-    <script src="two.js"></script>
+
+    <script>
+        async function uploadScript() {
+            const scriptContent = document.getElementById('scriptInput').value.trim();
+            if (!scriptContent) {
+                alert('Please paste a script first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ script: scriptContent })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    const rawUrl = `${window.location.origin}/raw/${data.id}`;
+                    const loadstring = `loadstring(game:HttpGet("${rawUrl}"))()`;
+                    
+                    document.getElementById('result').innerHTML = `
+                        <div class="success">
+                            <p>Script uploaded successfully!</p>
+                            <a href="/raw/${data.id}" target="_blank">View Raw Script</a>
+                        </div>
+                    `;
+                    
+                    document.getElementById('loadstringCode').textContent = loadstring;
+                    document.getElementById('loadstringInfo').style.display = 'block';
+                } else {
+                    alert('Failed to upload script: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error uploading script: ' + error.message);
+            }
+        }
+    </script>
 </body>
 </html>
